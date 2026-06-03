@@ -738,7 +738,6 @@ const Login = ({ onLogin }) => {
                   <option value="HR_STAFF">HR Staff</option>
                   <option value="HR_MANAGER">HR Manager</option>
                   <option value="MANAGER">Manager</option>
-                  <option value="ADMIN">Admin</option>
                 </select>
               </div>
             </div>

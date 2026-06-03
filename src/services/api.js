@@ -14,12 +14,15 @@ export const employeeAPI = {
   getAll: () => api.get("/employees"),
   getById: (id) => api.get(`/employees/${id}`),
   getActive: () => api.get("/employees/active"),
-  getReportees: (id) => api.get(`/employees/${id}/reportees`),
-  search: (keyword) => api.get(`/employees/search?keyword=${keyword}`),
+  getByDepartment: (deptId) => api.get(`/employees/department/${deptId}`),
   create: (data) => api.post("/employees", data),
   update: (id, data) => api.put(`/employees/${id}`, data),
-  delete: (id) => api.delete(`/employees/${id}`),
-  countActive: () => api.get("/employees/count/active"),
+  deactivate: (id) => api.patch(`/employees/${id}/deactivate`),
+  activate: (id) => api.patch(`/employees/${id}/activate`),
+  getDepartments: () => api.get("/employees/meta/departments"),
+  getDesignations: () => api.get("/employees/meta/designations"),
+  getDesignationsByDept: (deptId) =>
+    api.get(`/employees/meta/designations/${deptId}`),
 };
 
 // ── Attendance APIs ────────────────────────────
@@ -40,9 +43,13 @@ export const leaveAPI = {
   countPending: () => api.get("/leave/count/pending"),
   getTypes: () => api.get("/leave/types"),
   apply: (data) => api.post("/leave/apply", data),
-  approve: (id, approverId) => api.put(`/leave/${id}/approve`, { approverId }),
+  approve: (id, approverId) =>
+    api.put(`/leave/${id}/approve`, { approverId: Number(approverId) }),
   reject: (id, approverId, note) =>
-    api.put(`/leave/${id}/reject`, { approverId, note }),
+    api.put(`/leave/${id}/reject`, {
+      approverId: String(Number(approverId)),
+      note,
+    }),
   cancel: (id) => api.put(`/leave/${id}/cancel`),
 };
 
@@ -53,7 +60,7 @@ export const timesheetAPI = {
   create: (data) => api.post("/timesheets", data),
   submit: (id) => api.put(`/timesheets/${id}/submit`),
   approve: (id, approverId) =>
-    api.put(`/timesheets/${id}/approve`, { approverId }),
+    api.put(`/timesheets/${id}/approve`, { approverId: Number(approverId) }),
   reject: (id) => api.put(`/timesheets/${id}/reject`),
 };
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { employeeAPI } from "../services/api";
 import { MdSearch, MdPeople, MdAdd, MdClose } from "react-icons/md";
@@ -11,6 +11,7 @@ const avatarColors = [
   "avatar-red",
   "avatar-teal",
 ];
+
 const emptyForm = {
   employeeCode: "",
   firstName: "",
@@ -20,38 +21,86 @@ const emptyForm = {
   employmentType: "FULL_TIME",
   dateOfJoining: "",
   gender: "MALE",
+  departmentId: "",
+  designationId: "",
+  address: "",
 };
 
 const Employees = () => {
   const navigate = useNavigate();
   const [employees, setEmployees] = useState([]);
+  const [departments, setDepartments] = useState([]);
+  const [allDesignations, setAllDesignations] = useState([]);
+  const [filteredDesignations, setFilteredDesignations] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [metaLoading, setMetaLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [allEmployees, setAllEmployees] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     loadEmployees();
+    loadMeta();
   }, []);
 
   const loadEmployees = async () => {
     try {
       const res = await employeeAPI.getAll();
       setEmployees(res.data);
+      setAllEmployees(res.data);
     } catch (err) {
-      console.error(err);
+      console.error("loadEmployees error:", err);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSearch = async (e) => {
+  const loadMeta = async () => {
+    try {
+      const [deptRes, desigRes] = await Promise.all([
+        employeeAPI.getDepartments(),
+        employeeAPI.getDesignations(),
+      ]);
+      setDepartments(deptRes.data);
+      setAllDesignations(desigRes.data);
+      setFilteredDesignations(desigRes.data);
+    } catch (err) {
+      console.error("loadMeta error:", err);
+    } finally {
+      setMetaLoading(false);
+    }
+  };
+
+  const handleDeptChange = (deptId) => {
+    setForm((prev) => ({ ...prev, departmentId: deptId, designationId: "" }));
+    if (deptId) {
+      const filtered = allDesignations.filter(
+        (d) => d.department && String(d.department.id) === String(deptId),
+      );
+      setFilteredDesignations(filtered);
+    } else {
+      setFilteredDesignations(allDesignations);
+    }
+  };
+
+  const handleSearch = (e) => {
+    const val = e.target.value.toLowerCase();
     setSearch(e.target.value);
-    if (e.target.value.length > 1) {
-      const res = await employeeAPI.search(e.target.value);
-      setEmployees(res.data);
-    } else loadEmployees();
+    if (!val) {
+      setEmployees(allEmployees);
+    } else {
+      setEmployees(
+        allEmployees.filter(
+          (emp) =>
+            emp.firstName?.toLowerCase().includes(val) ||
+            emp.lastName?.toLowerCase().includes(val) ||
+            emp.email?.toLowerCase().includes(val) ||
+            emp.employeeCode?.toLowerCase().includes(val),
+        ),
+      );
+    }
   };
 
   const handleSubmit = async () => {
@@ -66,12 +115,17 @@ const Employees = () => {
     }
     setSaving(true);
     try {
-      await employeeAPI.create(form);
+      await employeeAPI.create({
+        ...form,
+        departmentId: form.departmentId ? parseInt(form.departmentId) : null,
+        designationId: form.designationId ? parseInt(form.designationId) : null,
+      });
       setShowForm(false);
       setForm(emptyForm);
+      setFilteredDesignations(allDesignations);
       loadEmployees();
     } catch (err) {
-      alert("Error: " + (err.response?.data?.message || err.message));
+      alert("Error: " + (err.response?.data?.error || err.message));
     } finally {
       setSaving(false);
     }
@@ -99,7 +153,11 @@ const Employees = () => {
         </div>
         <button
           className="btn btn-primary"
-          onClick={() => setShowForm(!showForm)}
+          onClick={() => {
+            setShowForm(!showForm);
+            setForm(emptyForm);
+            setFilteredDesignations(allDesignations);
+          }}
         >
           {showForm ? <MdClose size={16} /> : <MdAdd size={16} />}
           {showForm ? "Cancel" : "Add Employee"}
@@ -111,7 +169,11 @@ const Employees = () => {
           <div className="card-header">
             <div>
               <div className="card-title">New Employee</div>
-              <div className="card-subtitle">Fill in the details below</div>
+              <div className="card-subtitle">
+                {metaLoading
+                  ? "Loading departments..."
+                  : `${departments.length} departments available`}
+              </div>
             </div>
           </div>
           <div className="card-body">
@@ -120,7 +182,7 @@ const Employees = () => {
                 <label className="form-label">Employee Code *</label>
                 <input
                   className="form-control"
-                  placeholder="e.g. ZY201"
+                  placeholder="e.g. TN002"
                   value={form.employeeCode}
                   onChange={(e) =>
                     setForm({ ...form, employeeCode: e.target.value })
@@ -154,7 +216,7 @@ const Employees = () => {
                 <input
                   className="form-control"
                   type="email"
-                  placeholder="email@company.com"
+                  placeholder="email@technext.com"
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
                 />
@@ -178,6 +240,50 @@ const Employees = () => {
                     setForm({ ...form, dateOfJoining: e.target.value })
                   }
                 />
+              </div>
+              <div className="form-group">
+                <label className="form-label">
+                  Department{" "}
+                  {metaLoading && (
+                    <span style={{ color: "#94a3b8" }}>(loading...)</span>
+                  )}
+                </label>
+                <select
+                  className="form-control"
+                  value={form.departmentId}
+                  onChange={(e) => handleDeptChange(e.target.value)}
+                  disabled={metaLoading}
+                >
+                  <option value="">Select Department</option>
+                  {departments.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label">
+                  Designation{" "}
+                  {metaLoading && (
+                    <span style={{ color: "#94a3b8" }}>(loading...)</span>
+                  )}
+                </label>
+                <select
+                  className="form-control"
+                  value={form.designationId}
+                  onChange={(e) =>
+                    setForm({ ...form, designationId: e.target.value })
+                  }
+                  disabled={metaLoading}
+                >
+                  <option value="">Select Designation</option>
+                  {filteredDesignations.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.title} ({d.grade})
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className="form-group">
                 <label className="form-label">Employment Type</label>
@@ -205,6 +311,17 @@ const Employees = () => {
                   <option value="FEMALE">Female</option>
                   <option value="OTHER">Other</option>
                 </select>
+              </div>
+              <div className="form-group" style={{ gridColumn: "span 2" }}>
+                <label className="form-label">Address</label>
+                <input
+                  className="form-control"
+                  placeholder="Full address"
+                  value={form.address}
+                  onChange={(e) =>
+                    setForm({ ...form, address: e.target.value })
+                  }
+                />
               </div>
             </div>
             <div style={{ marginTop: 20, display: "flex", gap: 10 }}>
@@ -299,10 +416,10 @@ const Employees = () => {
                     <span className="code-pill">{emp.employeeCode}</span>
                   </td>
                   <td style={{ fontWeight: 600 }}>
-                    {emp.department?.name || "—"}
+                    {emp.departmentName || "—"}
                   </td>
                   <td style={{ color: "#64748b" }}>
-                    {emp.designation?.title || "—"}
+                    {emp.designationTitle || "—"}
                   </td>
                   <td>
                     <span

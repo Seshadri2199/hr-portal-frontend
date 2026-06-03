@@ -1,4 +1,5 @@
 import React from "react";
+import logo from "../assets/logo.jpg";
 import { Routes, Route, Link, useLocation } from "react-router-dom";
 import Dashboard from "../pages/Dashboard";
 import Employees from "../pages/Employees";
@@ -67,7 +68,6 @@ const Topbar = ({ user, onLogout }) => {
     const t = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(t);
   }, []);
-
   const timeStr = time.toLocaleTimeString("en-US", {
     hour: "2-digit",
     minute: "2-digit",
@@ -80,60 +80,23 @@ const Topbar = ({ user, onLogout }) => {
 
   return (
     <div className="topbar">
-      {/* Brand */}
-      <div style={{ display: "flex", alignItems: "center", gap: 11 }}>
+      {/* Brand with Logo */}
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <img
+          src={logo}
+          alt="TechNext HR"
+          style={{ height: 65, width: "auto", objectFit: "contain" }}
+        />
         <div
           style={{
-            width: 36,
-            height: 36,
-            borderRadius: 10,
-            background: "#0f172a",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexShrink: 0,
-            boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+            fontSize: 9.5,
+            color: "#94a3b8",
+            fontWeight: 700,
+            letterSpacing: "1px",
+            textTransform: "uppercase",
           }}
         >
-          <span
-            style={{
-              color: "#fff",
-              fontWeight: 900,
-              fontSize: 15,
-              fontFamily: "var(--font-display)",
-            }}
-          >
-            T
-          </span>
-        </div>
-        <div>
-          <div
-            style={{
-              fontFamily: "var(--font-display)",
-              fontSize: 15,
-              fontWeight: 800,
-              color: "#0f172a",
-              letterSpacing: "-0.3px",
-              lineHeight: 1,
-              display: "flex",
-              alignItems: "center",
-              gap: 5,
-            }}
-          >
-            TECHNEXT <span style={{ color: "#3b82f6" }}>HR</span>
-          </div>
-          <div
-            style={{
-              fontSize: 9.5,
-              color: "#94a3b8",
-              fontWeight: 700,
-              letterSpacing: "1px",
-              textTransform: "uppercase",
-              marginTop: 2,
-            }}
-          >
-            Admin Portal
-          </div>
+          Admin Portal
         </div>
       </div>
 
@@ -235,7 +198,6 @@ const Topbar = ({ user, onLogout }) => {
             color: "#fff",
             fontWeight: 800,
             fontSize: 13,
-            fontFamily: "var(--font-display)",
             cursor: "pointer",
             flexShrink: 0,
             border: "2px solid rgba(59,130,246,0.3)",
@@ -280,13 +242,13 @@ const AdminPortal = ({ user, onLogout }) => (
     <div className="main-layout">
       <Topbar user={user} onLogout={onLogout} />
       <Routes>
-        <Route path="/" element={<Dashboard />} />
+        <Route path="/" element={<Dashboard user={user} />} />
         <Route path="/employees" element={<Employees />} />
         <Route path="/employees/:id" element={<EmployeeProfile />} />
         <Route path="/attendance" element={<Attendance />} />
-        <Route path="/leave" element={<Leave />} />
-        <Route path="/timesheets" element={<Timesheets />} />
-        <Route path="/career" element={<CareerHistory />} />
+        <Route path="/leave" element={<Leave user={user} />} />
+        <Route path="/timesheets" element={<Timesheets user={user} />} />
+        <Route path="/career" element={<CareerHistory user={user} />} />
         <Route path="/reports" element={<Reports />} />
         <Route path="/announcements" element={<Announcements user={user} />} />
         <Route

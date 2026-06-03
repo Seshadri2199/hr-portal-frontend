@@ -1,28 +1,33 @@
 import React, { useState, useEffect } from "react";
 import { Routes, Route, Link, useLocation } from "react-router-dom";
 import { employeeAPI, leaveAPI, timesheetAPI } from "../services/api";
+import logo from "../assets/logo.jpg";
+import Leave from "../pages/Leave";
+import Timesheets from "../pages/Timesheets";
+import Attendance from "../pages/Attendance";
 import {
   MdDashboard,
   MdPeople,
   MdEventNote,
   MdAssignment,
   MdAccessTime,
+  MdCheck,
+  MdClose,
 } from "react-icons/md";
 
 const menuItems = [
   { path: "/", icon: <MdDashboard size={20} />, label: "Home" },
-  { path: "/my-team", icon: <MdPeople size={20} />, label: "Team" },
-  { path: "/approvals", icon: <MdEventNote size={20} />, label: "Approvals" },
+  { path: "/leave", icon: <MdEventNote size={20} />, label: "Leave" },
   { path: "/timesheets", icon: <MdAssignment size={20} />, label: "Sheets" },
   { path: "/attendance", icon: <MdAccessTime size={20} />, label: "Time" },
 ];
 
 const avatarColors = [
-  "avatar-blue",
-  "avatar-green",
-  "avatar-orange",
-  "avatar-purple",
-  "avatar-red",
+  { bg: "#eff6ff", text: "#1e40af" },
+  { bg: "#f0fdf4", text: "#166634" },
+  { bg: "#fffbeb", text: "#92400e" },
+  { bg: "#faf5ff", text: "#5b21b6" },
+  { bg: "#fef2f2", text: "#991b1b" },
 ];
 
 const Sidebar = () => {
@@ -51,7 +56,6 @@ const Topbar = ({ user, onLogout }) => {
     const t = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(t);
   }, []);
-
   const timeStr = time.toLocaleTimeString("en-US", {
     hour: "2-digit",
     minute: "2-digit",
@@ -64,62 +68,27 @@ const Topbar = ({ user, onLogout }) => {
 
   return (
     <div className="topbar">
-      <div style={{ display: "flex", alignItems: "center", gap: 11 }}>
+      {/* Brand with Logo */}
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <img
+          src={logo}
+          alt="TechNext HR"
+          style={{ height: 65, width: "auto", objectFit: "contain" }}
+        />
         <div
           style={{
-            width: 34,
-            height: 34,
-            borderRadius: 9,
-            background: "#334155",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexShrink: 0,
-            boxShadow: "0 2px 6px rgba(51,65,85,0.25)",
+            fontSize: 9.5,
+            color: "#94a3b8",
+            fontWeight: 700,
+            letterSpacing: "1px",
+            textTransform: "uppercase",
           }}
         >
-          <span
-            style={{
-              color: "#fff",
-              fontWeight: 900,
-              fontSize: 14,
-              fontFamily: "var(--font-display)",
-            }}
-          >
-            T
-          </span>
-        </div>
-        <div>
-          <div
-            style={{
-              fontFamily: "var(--font-display)",
-              fontSize: 14,
-              fontWeight: 800,
-              color: "#0f172a",
-              letterSpacing: "-0.3px",
-              lineHeight: 1,
-              display: "flex",
-              alignItems: "center",
-              gap: 5,
-            }}
-          >
-            TECHNEXT <span style={{ color: "#334155" }}>HR</span>
-          </div>
-          <div
-            style={{
-              fontSize: 9.5,
-              color: "#94a3b8",
-              fontWeight: 700,
-              letterSpacing: "1px",
-              textTransform: "uppercase",
-              marginTop: 2,
-            }}
-          >
-            Manager Portal
-          </div>
+          Manager Portal
         </div>
       </div>
 
+      {/* Clock */}
       <div
         style={{
           display: "flex",
@@ -165,6 +134,7 @@ const Topbar = ({ user, onLogout }) => {
         </div>
       </div>
 
+      {/* User */}
       <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
         <div
           style={{
@@ -175,7 +145,6 @@ const Topbar = ({ user, onLogout }) => {
             fontSize: 9.5,
             fontWeight: 700,
             border: "1px solid #e2e8f0",
-            letterSpacing: "0.5px",
           }}
         >
           MANAGER
@@ -201,7 +170,7 @@ const Topbar = ({ user, onLogout }) => {
               marginTop: 2,
             }}
           >
-            {user.employeeCode || "Manager"}
+            {user.employeeCode}
           </div>
         </div>
         <div
@@ -216,7 +185,6 @@ const Topbar = ({ user, onLogout }) => {
             color: "#fff",
             fontWeight: 800,
             fontSize: 12,
-            fontFamily: "var(--font-display)",
             cursor: "pointer",
             flexShrink: 0,
           }}
@@ -244,7 +212,6 @@ const Topbar = ({ user, onLogout }) => {
             cursor: "pointer",
             fontFamily: "var(--font-body)",
             transition: "all 150ms",
-            boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
           }}
         >
           Sign out
@@ -267,7 +234,7 @@ const ManagerDashboard = ({ user }) => {
   const loadData = async () => {
     try {
       const [empRes, leaveRes, tsRes] = await Promise.all([
-        employeeAPI.getReportees(user.employeeId),
+        employeeAPI.getAll(),
         leaveAPI.getPending(),
         timesheetAPI.getPending(),
       ]);
@@ -292,7 +259,7 @@ const ManagerDashboard = ({ user }) => {
 
   const handleRejectLeave = async (id) => {
     try {
-      await leaveAPI.reject(id, user.employeeId, "Rejected");
+      await leaveAPI.reject(id, user.employeeId, "Rejected by manager");
       loadData();
     } catch (err) {
       alert("Error rejecting leave");
@@ -311,59 +278,98 @@ const ManagerDashboard = ({ user }) => {
   const getInitials = (f, l) =>
     `${f?.charAt(0) || ""}${l?.charAt(0) || ""}`.toUpperCase();
 
-  if (loading)
-    return <div className="loading">Loading manager dashboard...</div>;
+  if (loading) return <div className="loading">Loading dashboard...</div>;
 
   return (
     <div className="content">
       <div className="page-header">
         <div>
           <div className="page-title">Team Dashboard</div>
-          <div className="page-subtitle">Welcome back, {user.fullName}!</div>
+          <div className="page-subtitle">
+            Welcome back, {user.fullName?.split(" ")[0]}!
+          </div>
         </div>
       </div>
 
+      {/* Summary cards */}
       <div
-        className="metrics-grid"
-        style={{ gridTemplateColumns: "repeat(3,1fr)" }}
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(3,1fr)",
+          gap: 14,
+          marginBottom: 22,
+        }}
       >
-        <div className="metric-card">
-          <div className="metric-icon slate">
-            <MdPeople size={24} />
-          </div>
-          <div className="metric-info">
-            <div className="metric-label">Team Members</div>
-            <div className="metric-value">{team.length}</div>
-            <div className="metric-change">Direct reportees</div>
-          </div>
-        </div>
-        <div className="metric-card">
-          <div className="metric-icon orange">
-            <MdEventNote size={24} />
-          </div>
-          <div className="metric-info">
-            <div className="metric-label">Pending Leaves</div>
-            <div className="metric-value">{pendingLeaves.length}</div>
-            <div className="metric-change" style={{ color: "#d97706" }}>
-              Need approval
+        {[
+          {
+            label: "Team Members",
+            value: team.length,
+            color: "#3b82f6",
+            bg: "#eff6ff",
+            border: "#bfdbfe",
+            sub: "All employees",
+          },
+          {
+            label: "Pending Leaves",
+            value: pendingLeaves.length,
+            color: "#d97706",
+            bg: "#fffbeb",
+            border: "#fde68a",
+            sub: "Need approval",
+          },
+          {
+            label: "Pending Timesheets",
+            value: pendingSheets.length,
+            color: "#7c3aed",
+            bg: "#faf5ff",
+            border: "#ddd6fe",
+            sub: "Need review",
+          },
+        ].map((card, i) => (
+          <div
+            key={i}
+            style={{
+              background: card.bg,
+              border: `1px solid ${card.border}`,
+              borderRadius: 14,
+              padding: "18px 20px",
+            }}
+          >
+            <div
+              style={{
+                fontSize: 11,
+                color: card.color,
+                fontWeight: 700,
+                textTransform: "uppercase",
+                letterSpacing: "0.6px",
+                marginBottom: 6,
+                opacity: 0.8,
+              }}
+            >
+              {card.label}
+            </div>
+            <div
+              style={{
+                fontSize: 30,
+                fontWeight: 800,
+                color: card.color,
+                lineHeight: 1,
+                marginBottom: 4,
+              }}
+            >
+              {card.value}
+            </div>
+            <div style={{ fontSize: 11, color: card.color, opacity: 0.65 }}>
+              {card.sub}
             </div>
           </div>
-        </div>
-        <div className="metric-card">
-          <div className="metric-icon green">
-            <MdAssignment size={24} />
-          </div>
-          <div className="metric-info">
-            <div className="metric-label">Pending Timesheets</div>
-            <div className="metric-value">{pendingSheets.length}</div>
-            <div className="metric-change">Need review</div>
-          </div>
-        </div>
+        ))}
       </div>
 
+      {/* Team members */}
       <div className="card" style={{ marginBottom: 18 }}>
         <div className="card-header">
-          <div className="card-title">My Team</div>
+          <div className="card-title">All Employees</div>
           <div className="card-subtitle">{team.length} members</div>
         </div>
         <div className="table-wrapper">
@@ -385,7 +391,19 @@ const ManagerDashboard = ({ user }) => {
                       style={{ display: "flex", alignItems: "center", gap: 10 }}
                     >
                       <div
-                        className={`avatar ${avatarColors[i % avatarColors.length]}`}
+                        style={{
+                          width: 36,
+                          height: 36,
+                          borderRadius: 10,
+                          flexShrink: 0,
+                          background: avatarColors[i % avatarColors.length].bg,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: 12,
+                          fontWeight: 700,
+                          color: avatarColors[i % avatarColors.length].text,
+                        }}
                       >
                         {getInitials(emp.firstName, emp.lastName)}
                       </div>
@@ -403,10 +421,10 @@ const ManagerDashboard = ({ user }) => {
                     <span className="code-pill">{emp.employeeCode}</span>
                   </td>
                   <td style={{ fontWeight: 600 }}>
-                    {emp.department?.name || "—"}
+                    {emp.departmentName || "—"}
                   </td>
                   <td style={{ color: "#64748b" }}>
-                    {emp.designation?.title || "—"}
+                    {emp.designationTitle || "—"}
                   </td>
                   <td>
                     <span className="badge badge-active">● Active</span>
@@ -420,8 +438,7 @@ const ManagerDashboard = ({ user }) => {
                       <div className="empty-icon">
                         <MdPeople />
                       </div>
-                      <div className="empty-title">No team members</div>
-                      <div className="empty-sub">No reportees assigned yet</div>
+                      <div className="empty-title">No employees found</div>
                     </div>
                   </td>
                 </tr>
@@ -431,10 +448,13 @@ const ManagerDashboard = ({ user }) => {
         </div>
       </div>
 
+      {/* Pending leaves */}
       <div className="card" style={{ marginBottom: 18 }}>
         <div className="card-header">
           <div className="card-title">Pending Leave Requests</div>
-          <div className="card-subtitle">{pendingLeaves.length} awaiting</div>
+          <div className="card-subtitle">
+            {pendingLeaves.length} awaiting approval
+          </div>
         </div>
         <div className="table-wrapper">
           <table>
@@ -452,15 +472,31 @@ const ManagerDashboard = ({ user }) => {
             <tbody>
               {pendingLeaves.map((l) => (
                 <tr key={l.id}>
-                  <td style={{ fontWeight: 700 }}>
-                    {l.employee?.firstName} {l.employee?.lastName}
+                  <td>
+                    <div style={{ fontWeight: 700 }}>
+                      {l.employee?.firstName} {l.employee?.lastName}
+                    </div>
+                    <div style={{ fontSize: 11, color: "#94a3b8" }}>
+                      {l.employee?.employeeCode}
+                    </div>
                   </td>
                   <td>
-                    <span className="code-pill">{l.leaveType?.name}</span>
+                    <span
+                      style={{
+                        background: "#eff6ff",
+                        color: "#1e40af",
+                        padding: "3px 10px",
+                        borderRadius: 8,
+                        fontSize: 12,
+                        fontWeight: 600,
+                      }}
+                    >
+                      {l.leaveType?.name}
+                    </span>
                   </td>
                   <td style={{ fontSize: 12 }}>{l.fromDate}</td>
                   <td style={{ fontSize: 12 }}>{l.toDate}</td>
-                  <td style={{ fontWeight: 800 }}>{l.totalDays}</td>
+                  <td style={{ fontWeight: 800 }}>{l.totalDays}d</td>
                   <td style={{ color: "#64748b", fontSize: 12 }}>
                     {l.reason || "—"}
                   </td>
@@ -470,13 +506,13 @@ const ManagerDashboard = ({ user }) => {
                         className="btn btn-success btn-sm"
                         onClick={() => handleApproveLeave(l.id)}
                       >
-                        ✓ Approve
+                        <MdCheck size={12} /> Approve
                       </button>
                       <button
                         className="btn btn-danger btn-sm"
                         onClick={() => handleRejectLeave(l.id)}
                       >
-                        ✗ Reject
+                        <MdClose size={12} /> Reject
                       </button>
                     </div>
                   </td>
@@ -499,10 +535,13 @@ const ManagerDashboard = ({ user }) => {
         </div>
       </div>
 
+      {/* Pending timesheets */}
       <div className="card">
         <div className="card-header">
           <div className="card-title">Pending Timesheets</div>
-          <div className="card-subtitle">{pendingSheets.length} awaiting</div>
+          <div className="card-subtitle">
+            {pendingSheets.length} awaiting approval
+          </div>
         </div>
         <div className="table-wrapper">
           <table>
@@ -519,12 +558,28 @@ const ManagerDashboard = ({ user }) => {
             <tbody>
               {pendingSheets.map((t) => (
                 <tr key={t.id}>
-                  <td style={{ fontWeight: 700 }}>
-                    {t.employee?.firstName} {t.employee?.lastName}
+                  <td>
+                    <div style={{ fontWeight: 700 }}>
+                      {t.employee?.firstName} {t.employee?.lastName}
+                    </div>
+                    <div style={{ fontSize: 11, color: "#94a3b8" }}>
+                      {t.employee?.employeeCode}
+                    </div>
                   </td>
                   <td style={{ fontSize: 12 }}>{t.workDate}</td>
                   <td>
-                    <span className="code-pill">{t.hoursLogged}h</span>
+                    <span
+                      style={{
+                        background: "#eff6ff",
+                        color: "#1e40af",
+                        padding: "3px 10px",
+                        borderRadius: 8,
+                        fontSize: 13,
+                        fontWeight: 800,
+                      }}
+                    >
+                      {t.hoursLogged}h
+                    </span>
                   </td>
                   <td style={{ fontWeight: 600 }}>{t.project || "—"}</td>
                   <td style={{ color: "#64748b", fontSize: 12 }}>
@@ -535,7 +590,7 @@ const ManagerDashboard = ({ user }) => {
                       className="btn btn-success btn-sm"
                       onClick={() => handleApproveSheet(t.id)}
                     >
-                      ✓ Approve
+                      <MdCheck size={12} /> Approve
                     </button>
                   </td>
                 </tr>
@@ -567,6 +622,9 @@ const ManagerPortal = ({ user, onLogout }) => (
       <Topbar user={user} onLogout={onLogout} />
       <Routes>
         <Route path="/" element={<ManagerDashboard user={user} />} />
+        <Route path="/leave" element={<Leave user={user} />} />
+        <Route path="/timesheets" element={<Timesheets user={user} />} />
+        <Route path="/attendance" element={<Attendance />} />
       </Routes>
     </div>
   </div>

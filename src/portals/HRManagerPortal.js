@@ -1,4 +1,5 @@
 import React from "react";
+import logo from "../assets/logo.jpg";
 import { Routes, Route, Link, useLocation } from "react-router-dom";
 import Dashboard from "../pages/Dashboard";
 import Employees from "../pages/Employees";
@@ -54,7 +55,6 @@ const Topbar = ({ user, onLogout }) => {
     const t = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(t);
   }, []);
-
   const timeStr = time.toLocaleTimeString("en-US", {
     hour: "2-digit",
     minute: "2-digit",
@@ -67,62 +67,27 @@ const Topbar = ({ user, onLogout }) => {
 
   return (
     <div className="topbar">
-      <div style={{ display: "flex", alignItems: "center", gap: 11 }}>
+      {/* Brand with Logo */}
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <img
+          src={logo}
+          alt="TechNext HR"
+          style={{ height: 65, width: "auto", objectFit: "contain" }}
+        />
         <div
           style={{
-            width: 34,
-            height: 34,
-            borderRadius: 9,
-            background: "#334155",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexShrink: 0,
-            boxShadow: "0 2px 6px rgba(51,65,85,0.25)",
+            fontSize: 9.5,
+            color: "#94a3b8",
+            fontWeight: 700,
+            letterSpacing: "1px",
+            textTransform: "uppercase",
           }}
         >
-          <span
-            style={{
-              color: "#fff",
-              fontWeight: 900,
-              fontSize: 14,
-              fontFamily: "var(--font-display)",
-            }}
-          >
-            T
-          </span>
-        </div>
-        <div>
-          <div
-            style={{
-              fontFamily: "var(--font-display)",
-              fontSize: 14,
-              fontWeight: 800,
-              color: "#0f172a",
-              letterSpacing: "-0.3px",
-              lineHeight: 1,
-              display: "flex",
-              alignItems: "center",
-              gap: 5,
-            }}
-          >
-            TECHNEXT <span style={{ color: "#334155" }}>HR</span>
-          </div>
-          <div
-            style={{
-              fontSize: 9.5,
-              color: "#94a3b8",
-              fontWeight: 700,
-              letterSpacing: "1px",
-              textTransform: "uppercase",
-              marginTop: 2,
-            }}
-          >
-            HR Manager Portal
-          </div>
+          HR Manager Portal
         </div>
       </div>
 
+      {/* Clock */}
       <div
         style={{
           display: "flex",
@@ -168,6 +133,7 @@ const Topbar = ({ user, onLogout }) => {
         </div>
       </div>
 
+      {/* User */}
       <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
         <div
           style={{
@@ -219,7 +185,6 @@ const Topbar = ({ user, onLogout }) => {
             color: "#fff",
             fontWeight: 800,
             fontSize: 12,
-            fontFamily: "var(--font-display)",
             cursor: "pointer",
             flexShrink: 0,
           }}
@@ -247,7 +212,6 @@ const Topbar = ({ user, onLogout }) => {
             cursor: "pointer",
             fontFamily: "var(--font-body)",
             transition: "all 150ms",
-            boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
           }}
         >
           Sign out
@@ -263,13 +227,13 @@ const HRManagerPortal = ({ user, onLogout }) => (
     <div className="main-layout">
       <Topbar user={user} onLogout={onLogout} />
       <Routes>
-        <Route path="/" element={<Dashboard />} />
+        <Route path="/" element={<Dashboard user={user} />} />
         <Route path="/employees" element={<Employees />} />
         <Route path="/employees/:id" element={<EmployeeProfile />} />
         <Route path="/attendance" element={<Attendance />} />
-        <Route path="/leave" element={<Leave />} />
-        <Route path="/timesheets" element={<Timesheets />} />
-        <Route path="/career" element={<CareerHistory />} />
+        <Route path="/leave" element={<Leave user={user} />} />
+        <Route path="/timesheets" element={<Timesheets user={user} />} />
+        <Route path="/career" element={<CareerHistory user={user} />} />
         <Route path="/reports" element={<Reports />} />
       </Routes>
     </div>
