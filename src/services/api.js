@@ -4,12 +4,9 @@ const API_BASE_URL = "http://localhost:8080/api";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
-  headers: {
-    "Content-Type": "application/json",
-  },
+  headers: { "Content-Type": "application/json" },
 });
 
-// ── Employee APIs ──────────────────────────────
 export const employeeAPI = {
   getAll: () => api.get("/employees"),
   getById: (id) => api.get(`/employees/${id}`),
@@ -25,7 +22,6 @@ export const employeeAPI = {
     api.get(`/employees/meta/designations/${deptId}`),
 };
 
-// ── Attendance APIs ────────────────────────────
 export const attendanceAPI = {
   getByEmployee: (id) => api.get(`/attendance/employee/${id}`),
   getToday: (id) => api.get(`/attendance/employee/${id}/today`),
@@ -35,7 +31,6 @@ export const attendanceAPI = {
   checkOut: (id) => api.put(`/attendance/checkout/${id}`),
 };
 
-// ── Leave APIs ─────────────────────────────────
 export const leaveAPI = {
   getAll: () => api.get("/leave"),
   getByEmployee: (id) => api.get(`/leave/employee/${id}`),
@@ -53,7 +48,6 @@ export const leaveAPI = {
   cancel: (id) => api.put(`/leave/${id}/cancel`),
 };
 
-// ── Timesheet APIs ─────────────────────────────
 export const timesheetAPI = {
   getByEmployee: (id) => api.get(`/timesheets/employee/${id}`),
   getPending: () => api.get("/timesheets/pending"),
@@ -64,18 +58,15 @@ export const timesheetAPI = {
   reject: (id) => api.put(`/timesheets/${id}/reject`),
 };
 
-// ── Career History APIs ────────────────────────
 export const careerHistoryAPI = {
   getByEmployee: (id) => api.get(`/career-history/employee/${id}`),
   add: (empId, data) => api.post(`/career-history/employee/${empId}`, data),
 };
 
-// ── Dashboard API ──────────────────────────────
 export const dashboardAPI = {
   get: () => api.get("/dashboard"),
 };
 
-// ── Announcement APIs ──────────────────────────
 export const announcementAPI = {
   getActive: () => api.get("/announcements"),
   getAll: () => api.get("/announcements/all"),
