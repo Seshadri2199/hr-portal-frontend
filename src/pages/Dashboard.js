@@ -1,11 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  dashboardAPI,
-  employeeAPI,
-  leaveAPI,
-  attendanceAPI,
-} from "../services/api";
+import { dashboardAPI, employeeAPI, leaveAPI } from "../services/api";
 import {
   MdPeople,
   MdAccessTime,
@@ -21,7 +16,7 @@ const avatarColors = [
   { bg: "#fffbeb", text: "#92400e" },
   { bg: "#faf5ff", text: "#5b21b6" },
   { bg: "#fef2f2", text: "#991b1b" },
-  { bg: "#f0fdfa", text: "#134e4a" },
+  { bg: "#f0fdfa", text: "#197e78" },
 ];
 
 const MetricCard = ({ label, value, sub, subColor, icon, accentColor }) => (
